@@ -7,7 +7,7 @@
  *
  * The output result in the file: result-phantomjs.json
  * 
- * The const: MAX_TRY and MAX_BACK_STEP can be modified to have better result: increase -> more effecient, decrease -> faster
+ * The const: MAX_NB_TRY and MAX_BACK_STEP can be modified to have better result: increase -> more effecient, decrease -> faster
  * 
  * @author Luong NGUYEN - luongnv89@gmail.com
  *
@@ -16,7 +16,7 @@ var webpage = require('webpage'),
     fs = require('fs');
 
 const ROOT_URL = 'https://web.bankin.com/challenge/index.html', // start URL to get data
-    MAX_TRY = 5, // Maximum number of time trying to get data from one URL
+    MAX_NB_TRY = 5, // Maximum number of time trying to get data from one URL
     MAX_BACK_STEP = 5, // Maximum number of step of going backward when failed to get data from one URL
     OUTPUT_FILE = 'result-phantomjs.json'; // output file contains result
 
@@ -146,10 +146,10 @@ function injectExternalTool() {
             return null;
         }
         var data = {
-            account: listTDs[0].innerHTML,
-            transaction: listTDs[1].innerHTML,
-            amount: extTools.extractAmount(listTDs[2].innerHTML),
-            currency: extTools.extractCurrency(listTDs[2].innerHTML)
+            account: listTDs[0].innerHTML.trim(),
+            transaction: listTDs[1].innerHTML.trim(),
+            amount: extTools.extractAmount(listTDs[2].innerHTML.trim()),
+            currency: extTools.extractCurrency(listTDs[2].innerHTML.trim())
         }
         return data;
     };
@@ -255,6 +255,35 @@ function createNewPage() {
 }
 
 /**
+ * Remove duplicated transactions from an array
+ * @param {*} array_data array data need to remove the duplicated transactions
+ */
+function remove_duplicated_trans(array_data) {
+    var final_data = [],
+        index1 = 0,
+        index2 = 0;
+    for (index1 = 0; index1 < array_data.length; index1++) {
+        var current_data = array_data[index1];
+        var is_duplicated = false;
+        for (index2 = 0; index2 < final_data.length; index2++) {
+            if (current_data.account === final_data[index2].account
+                && current_data.amount === final_data[index2].amount
+                && current_data.currency === final_data[index2].currency
+                && current_data.transaction === final_data[index2].transaction){
+                    is_duplicated = true;
+                    break;
+                }
+        }
+        if (is_duplicated) {
+            console.log('Duplicated: ' + JSON.stringify(current_data,null,2));
+        } else {
+            final_data.push(current_data);
+        }
+    }
+    return final_data;
+}
+
+/**
  * Finish scrapping data when the mission is completed or there are some error when trying to get data
  *
  * Show the result of scrapping process:
@@ -273,16 +302,15 @@ function finish_scrapping(status) {
     } else {
         console.log('\n\n\tFAILED FAILED FAILED!!!!');
     }
+    console.log('\tTotal number of collected data: ' + allData.length);
     // Remove the duplicated data
-    var finalData = allData.filter(function (trans, index, self) {
-        return index === self.indexOf(trans);
-    });
-    console.log('\tTotal number of transactions: ' + finalData.length);
+    var final_data = remove_duplicated_trans(allData);
+    console.log('\tTotal number of transactions: ' + final_data.length);
     console.log('\tNumber of failed request: ' + nb_failed);
     console.log('\tNumber of error request: ' + nb_error);
     console.log('\tTotal time: ' + total_time + ' ms');
     // Write data to the output file
-    var content = JSON.stringify(finalData, null, 4);
+    var content = JSON.stringify(final_data, null, 4);
     fs.write(OUTPUT_FILE, content, 'w');
     console.log('\tOutput result: ' + OUTPUT_FILE + '\n\n');
     setTimeout(function () {
@@ -292,13 +320,13 @@ function finish_scrapping(status) {
 
 /**
  * Update data page url on failed (to load the page or to get data)
- * -> Check if the number of time trying to get the data is less than MAX_TRY -> simply reload the page, do not need to change current_url
+ * -> Check if the number of time trying to get the data is less than MAX_NB_TRY -> simply reload the page, do not need to change current_url
  * -> Otherwise:
  *      -> Check if the number of backward steps is less than MAX_BACK_STEP -> change data page url backward 1 step and reload the page
  *      -> Otherwise: FINISHED SCRAPPING -> MISSION FAILED FAILED FAILED!
  */
 function update_data_page_url_on_failed() {
-    if (current_nb_try >= MAX_TRY) {
+    if (current_nb_try >= MAX_NB_TRY) {
         current_nb_try = 0; // Reset number of try
         current_nb_back_steps++; // Backstep 1 more step
         current_index--; // Move 1 step to avoid problem
@@ -327,7 +355,7 @@ function update_data_page_url_on_failed() {
  *      -> Go to: reload_the_page
  *
  * reload_the_page
- *      -> check if the number of time trying to get data is less than MAX_TRY -> Simply reload the page
+ *      -> check if the number of time trying to get data is less than MAX_NB_TRY -> Simply reload the page
  *      -> otherwise:
  *             -> check if the number of backward steps is less than MAX_BACK_STEP -> Go backward 1 more step and reload the page
  *             -> otherwise: finished -> FAILED FAILED FAILED
