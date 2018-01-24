@@ -255,32 +255,22 @@ function createNewPage() {
 }
 
 /**
- * Remove duplicated transactions from an array
- * @param {*} array_data array data need to remove the duplicated transactions
- * 
+ * Check if there exists at least 1 element in both a1 and a2
+ * @param {*} a1
+ * @param {*} a2
  */
-function remove_duplicated_trans(array_data, unique_data, duplicated_data) {
-    var index1 = 0,
-        index2 = 0;
-    for (index1 = 0; index1 < array_data.length; index1++) {
-        var current_data = array_data[index1];
-        var is_duplicated = false;
-        for (index2 = 0; index2 < unique_data.length; index2++) {
-            if (current_data.account === unique_data[index2].account
-                && current_data.amount === unique_data[index2].amount
-                && current_data.currency === unique_data[index2].currency
-                && current_data.transaction === unique_data[index2].transaction){
-                    is_duplicated = true;
-                    break;
-                }
-        }
-        if (is_duplicated) {
-            duplicated_data.push(current_data);
-        } else {
-            unique_data.push(current_data);
+function check_data_overlap(a1, a2) {
+    for (var index = 0; index < a1.length; index++) {
+        for (var index2 = 0; index2 < a2.length; index2++) {
+            if (a1[index].transaction === a2[index2].transaction) {
+                console.log('Duplicated transaction: ' + a1[index].transaction);
+                return true;
+            }
         }
     }
+    return false;
 }
+
 
 /**
  * Finish scrapping data when the mission is completed or there are some error when trying to get data
@@ -302,23 +292,13 @@ function finish_scrapping(status) {
         console.log('\n\n\tFAILED FAILED FAILED!!!!');
     }
     console.log('\tTotal number of collected data: ' + allData.length);
-    // Remove the duplicated data
-    var final_data = [],
-        duplicated_data = [];
-    remove_duplicated_trans(allData, final_data, duplicated_data);
-    console.log('\tNumber of transactions: ' + final_data.length);
-    console.log('\tCollected transactions: ' + allData.length);
-    console.log('\tDuplicated transactions: ' + duplicated_data.length);
+    console.log('\tNumber of transactions: ' + allData.length);
     console.log('\tNumber of failed request: ' + nb_failed);
     console.log('\tNumber of error request: ' + nb_error);
     console.log('\tTotal time: ' + total_time + ' ms');
     // Write data to the output file
-    fs.write(OUTPUT_FILE, JSON.stringify(final_data, null, 4), 'w');
+    fs.write(OUTPUT_FILE, JSON.stringify(allData, null, 4), 'w');
     console.log('\tOutput result: ' + OUTPUT_FILE);
-    if (duplicated_data.length > 0) {
-        fs.write('duplicated-'+OUTPUT_FILE, JSON.stringify(duplicated_data, null, 4), 'w');
-        console.log('\tDuplicated transactions: duplicated-' + OUTPUT_FILE + '\n\n');
-    }
 
     setTimeout(function () {
         phantom.exit(status);
@@ -404,11 +384,18 @@ function pageOpenCallback(status) {
         if (!returnData.no_content && returnData.trans.length > (current_nb_back_steps + 1)) {
             console.log('GOOD - we are going for the next one');
             // There is some data
-            allData = allData.concat(returnData.trans.slice(current_nb_back_steps));
-            current_nb_try = 0; // Reset number of try for current url
-            current_nb_back_steps = 0;
-            // Go to next page normally
-            current_index += returnData.trans.length - current_nb_back_steps;
+            var new_data = returnData.trans.slice(current_nb_back_steps);
+            if (check_data_overlap(allData,new_data)) { // Make sure we get new data
+                console.log('[FAILED] overlap data ' + current_url);
+                nb_failed++;
+                update_data_page_url_on_failed();
+            } else {
+                allData = allData.concat(new_data);
+                current_nb_try = 0; // Reset number of try for current url
+                current_nb_back_steps = 0;
+                // Go to next page normally
+                current_index += returnData.trans.length - current_nb_back_steps;
+            }
         } else {
             console.log('[FAILED] ' + current_url);
             nb_failed++;
