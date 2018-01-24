@@ -73,10 +73,10 @@ function extractData() {
             return null;
         }
         var data = {
-            account: listTDs[0].innerHTML,
-            transaction: listTDs[1].innerHTML,
-            amount: extractAmount(listTDs[2].innerHTML),
-            currency: extractCurrency(listTDs[2].innerHTML)
+            account: listTDs[0].innerHTML.trim(),
+            transaction: listTDs[1].innerHTML.trim(),
+            amount: extractAmount(listTDs[2].innerHTML.trim()),
+            currency: extractCurrency(listTDs[2].innerHTML.trim())
         }
         return data;
     }
@@ -135,7 +135,7 @@ function extractData() {
  * @param {*} a1
  * @param {*} a2
  */
-function dataDuplicated(a1, a2) {
+function check_data_overlap(a1, a2) {
     for (var index = 0; index < a1.length; index++) {
         for (var index2 = 0; index2 < a2.length; index2++) {
             if (a1[index].transaction === a2[index2].transaction) {
@@ -146,6 +146,34 @@ function dataDuplicated(a1, a2) {
     }
     return false;
 }
+
+/**
+ * Remove duplicated transactions from an array
+ * @param {*} array_data array data need to remove the duplicated transactions
+ */
+function remove_duplicated_trans(array_data) {
+    var final_data = [];
+    for (let index = 0; index < array_data.length; index++) {
+        var current_data = array_data[index];
+        var found = false;
+        for (let index2 = 0; index2 < final_data.length; index2++) {
+            if (current_data.account === final_data[index2].account
+                && current_data.amount === final_data[index2].amount
+                && current_data.currency === final_data[index2].currency
+                && current_data.transaction === final_data[index2].transaction){
+                    found = true;
+                    break;
+                }
+        }
+        if (found) {
+            console.log('Duplicated: ' + JSON.stringify(current_data,null,2));
+        } else {
+            final_data.push(current_data);
+        }
+    }
+    return final_data;
+}
+
 /**
  * Start scrapping data
  * - Do the loop until stopScrapping is true:
@@ -237,7 +265,7 @@ async function run() {
             // Update data
             if (page_data.length > 1) {
                 // Check for duplicate
-                if (!dataDuplicated(allData, page_data)) {
+                if (!check_data_overlap(allData, page_data)) {
                     current_nb_try = 0; // Reset number of try for current url
                     allData = allData.concat(page_data);
                 } else {
@@ -353,9 +381,7 @@ async function run() {
     console.log('\n---------------');
     var total_time = Date.now() - start_time;
     // Remove the duplicated data
-    var finalData = allData.filter(function (trans, index, self) {
-        return index == self.indexOf(trans);
-    });
+    var finalData = remove_duplicated_trans(allData);
     console.log('\tTotal number of transactions: ' + finalData.length);
     console.log('\tNumber of skipped url: ' + nb_skipped_urls);
     console.log('\tNumber of failed request: ' + nb_failed);
