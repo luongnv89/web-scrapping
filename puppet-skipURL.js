@@ -148,34 +148,6 @@ function check_data_overlap(a1, a2) {
 }
 
 /**
- * Remove duplicated transactions from an array
- * @param {*} array_data array data need to remove the duplicated transactions
- */
-function remove_duplicated_trans(array_data, unique_data, duplicated_data) {
-    var index1 = 0,
-        index2 = 0;
-    for (index1 = 0; index1 < array_data.length; index1++) {
-        var current_data = array_data[index1];
-        var is_duplicated = false;
-        for (index2 = 0; index2 < unique_data.length; index2++) {
-            if (current_data.account === unique_data[index2].account
-                && current_data.amount === unique_data[index2].amount
-                && current_data.currency === unique_data[index2].currency
-                && current_data.transaction === unique_data[index2].transaction){
-                    is_duplicated = true;
-                    break;
-                }
-        }
-        if (is_duplicated) {
-            console.log('Duplicated: ' + JSON.stringify(current_data,null,2));
-            duplicated_data.push(current_data);
-        } else {
-            unique_data.push(current_data);
-        }
-    }
-}
-
-/**
  * Start scrapping data
  * - Do the loop until stopScrapping is true:
  *      - Open and get data from current page: the result can be SUCCESS or FAILED
@@ -381,13 +353,7 @@ async function run() {
 
     console.log('\n---------------');
     var total_time = Date.now() - start_time;
-    // Remove the duplicated data
-    var final_data = [],
-        duplicated_data = [];
-    remove_duplicated_trans(allData, final_data, duplicated_data);
-    console.log('\tNumber of transactions: ' + final_data.length);
-    console.log('\tCollected transactions: ' + allData.length);
-    console.log('\tDuplicated transactions: ' + duplicated_data.length);
+    console.log('\tNumber of transactions: ' + allData.length);
     console.log('\tNumber of skipped url: ' + nb_skipped_urls);
     console.log('\tNumber of failed request: ' + nb_failed);
     console.log('\tNumber of error request: ' + nb_error);
@@ -395,10 +361,6 @@ async function run() {
     // Write data to the output file
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(final_data, null, 4));
     console.log('\tOutput result: ' + OUTPUT_FILE);
-    if (duplicated_data.length > 0) {
-        fs.writeFileSync('duplicated-'+OUTPUT_FILE, JSON.stringify(duplicated_data, null, 4));
-        console.log('\tDuplicated transactions: ' + OUTPUT_FILE + '\n\n');
-    }
     await browser.close();
 };
 var start_time = Date.now();
