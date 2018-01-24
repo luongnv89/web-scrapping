@@ -63,13 +63,9 @@ Current URL: https://web.bankin.com/challenge/index.html
 Number of try: 1
 Number of back step: 0
 [SUCCESS] Openned page: https://web.bankin.com/challenge/index.html
-[CONSOLE] injectExternalTool: OK
-[CONSOLE] [extractDataFromPage] ... 
-[CONSOLE] Frame exists
-[CONSOLE] listTRDOMs: 51
-Return data: false - false - 50
+Return data: true - false - 0
+Return data (2): false - false - 50
 GOOD - we are going for the next one
-[onAlert] Oops! Something went wrong
 
 ---------------
 Number of transactions: 50
@@ -77,29 +73,21 @@ Current URL: https://web.bankin.com/challenge/index.html?start=50
 Number of try: 1
 Number of back step: 0
 [SUCCESS] Openned page: https://web.bankin.com/challenge/index.html?start=50
-[CONSOLE] injectExternalTool: OK
-[CONSOLE] [extractDataFromPage] ... 
-[CONSOLE] Frame does not exists
-[CONSOLE] dvTable exists -> Going to find Table
-[CONSOLE] listTRDOMs: 0
 Return data: true - false - 0
-[CONSOLE] [extractDataFromPage] ... 
+Return data (2): true - false - 0
+[FAILED] https://web.bankin.com/challenge/index.html?start=50
+
 ....
 ....
 
 ---------------
-
-
 	MISSION COMPLETED!!!!
-	Total number of collected data: 5048
-	Number of transactions: 4148
-	Collected transactions: 5048
-	Duplicated transactions: 900
-	Number of failed request: 87
-	Number of error request: 36
-	Total time: 21465 ms
+	Total number of collected data: 4999
+	Number of transactions: 4999
+	Number of failed request: 114
+	Number of error request: 54
+	Total time: 25053 ms
 	Output result: result-phantomjs.json
-	Duplicated transactions: duplicated-result-phantomjs.json
 
 ```
 
@@ -182,12 +170,10 @@ Number of data row: 50
 
 ---------------
 	Number of transactions: 4999
-	Collected transactions: 4999
-	Duplicated transactions: 0
 	Number of skipped url: 9
-	Number of failed request: 81
+	Number of failed request: 79
 	Number of error request: 0
-	Total time: 219352 ms
+	Total time: 216426 ms
 	Output result: result-puppet.json
 
 ```
@@ -215,6 +201,18 @@ Output: `result-puppet.json`:
         "currency": "€"
     },
 ```
+
+### Conclusion
+
+Both solutions work, but `phantomjs-backstep.js` seems faster than `puppet-skipURL.js`.
+
+| # | `phantomjs-backstep.js` | `puppet-skipURL.js` | 
+| - | --- | --- | 
+| Transactions | 4999 | 4999 | 
+| Time (ms)  | 25053 | 216426 | 
+| Skipped URL  |  | 9 | 
+| Request Failed  | 114 | 79 | 
+| Request Error  | 54 | 0 | 
 
 ## References
 
