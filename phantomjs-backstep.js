@@ -243,13 +243,13 @@ function createNewPage() {
         system.stderr.writeLine(msgStack.join('\n'));
     };
 
-    newPage.onConsoleMessage = function (message) {
-        console.log('[CONSOLE] ' + message);
-    };
+    // newPage.onConsoleMessage = function (message) {
+    //     console.log('[CONSOLE] ' + message);
+    // };
 
-    newPage.onAlert = function (message) {
-        console.log("[onAlert] " + message);
-    };
+    // newPage.onAlert = function (message) {
+    //     console.log("[onAlert] " + message);
+    // };
 
     return newPage;
 }
