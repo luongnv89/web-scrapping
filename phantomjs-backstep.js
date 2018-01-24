@@ -257,30 +257,29 @@ function createNewPage() {
 /**
  * Remove duplicated transactions from an array
  * @param {*} array_data array data need to remove the duplicated transactions
+ * 
  */
-function remove_duplicated_trans(array_data) {
-    var final_data = [],
-        index1 = 0,
+function remove_duplicated_trans(array_data, unique_data, duplicated_data) {
+    var index1 = 0,
         index2 = 0;
     for (index1 = 0; index1 < array_data.length; index1++) {
         var current_data = array_data[index1];
         var is_duplicated = false;
-        for (index2 = 0; index2 < final_data.length; index2++) {
-            if (current_data.account === final_data[index2].account
-                && current_data.amount === final_data[index2].amount
-                && current_data.currency === final_data[index2].currency
-                && current_data.transaction === final_data[index2].transaction){
+        for (index2 = 0; index2 < unique_data.length; index2++) {
+            if (current_data.account === unique_data[index2].account
+                && current_data.amount === unique_data[index2].amount
+                && current_data.currency === unique_data[index2].currency
+                && current_data.transaction === unique_data[index2].transaction){
                     is_duplicated = true;
                     break;
                 }
         }
         if (is_duplicated) {
-            console.log('Duplicated: ' + JSON.stringify(current_data,null,2));
+            duplicated_data.push(current_data);
         } else {
-            final_data.push(current_data);
+            unique_data.push(current_data);
         }
     }
-    return final_data;
 }
 
 /**
@@ -304,15 +303,23 @@ function finish_scrapping(status) {
     }
     console.log('\tTotal number of collected data: ' + allData.length);
     // Remove the duplicated data
-    var final_data = remove_duplicated_trans(allData);
-    console.log('\tTotal number of transactions: ' + final_data.length);
+    var final_data = [],
+        duplicated_data = [];
+    remove_duplicated_trans(allData, final_data, duplicated_data);
+    console.log('\tNumber of transactions: ' + final_data.length);
+    console.log('\tCollected transactions: ' + allData.length);
+    console.log('\tDuplicated transactions: ' + duplicated_data.length);
     console.log('\tNumber of failed request: ' + nb_failed);
     console.log('\tNumber of error request: ' + nb_error);
     console.log('\tTotal time: ' + total_time + ' ms');
     // Write data to the output file
-    var content = JSON.stringify(final_data, null, 4);
-    fs.write(OUTPUT_FILE, content, 'w');
-    console.log('\tOutput result: ' + OUTPUT_FILE + '\n\n');
+    fs.write(OUTPUT_FILE, JSON.stringify(final_data, null, 4), 'w');
+    console.log('\tOutput result: ' + OUTPUT_FILE);
+    if (duplicated_data.length > 0) {
+        fs.write('duplicated-'+OUTPUT_FILE, JSON.stringify(duplicated_data, null, 4), 'w');
+        console.log('\tDuplicated transactions: duplicated-' + OUTPUT_FILE + '\n\n');
+    }
+
     setTimeout(function () {
         phantom.exit(status);
     }, 3000);
