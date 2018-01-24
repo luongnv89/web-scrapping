@@ -359,7 +359,7 @@ async function run() {
     console.log('\tNumber of error request: ' + nb_error);
     console.log('\tTotal time: ' + total_time + ' ms');
     // Write data to the output file
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(final_data, null, 4));
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(allData, null, 4));
     console.log('\tOutput result: ' + OUTPUT_FILE);
     await browser.close();
 };
